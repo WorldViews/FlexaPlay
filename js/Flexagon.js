@@ -5,24 +5,12 @@
 let doc = null;
 let size = "LETTER";
 let blob = null;
-//let blobStream = null;
 
-let tri0 = {
-    color: "#FF3300",
-    points: [[0, 200], [60, 250], [60, 150]]
-}
+let showLattice = false;
+let showLabels = true;
 
-let tri1 = {
-    color: "#0033FF",
-    points: [[110, 200], [200, 250], [200, 150]]
-}
-
-let tri2 = {
-    color: "#33FF33",
-    points: [[600, 400], [800, 400], [700, 300]]
-}
-
-let triangles0 = [tri0, tri1, tri2];
+let svgViewer = null;
+let pdfViewer = null;
 
 function getMidPoint(tri) {
     let pts = tri.points;
@@ -38,17 +26,44 @@ let y0 = 100;
 let e1 = [s, 0];
 let e2 = [s * Math.cos(a), s * Math.sin(a)];
 
-function getPoint(i, j) {
+function getPointXY(i, j) {
     let x = x0 + j * e1[0] + i * e2[0];
-    let y = y0 + j * e1[1] + i * e2[1]
-    return [x, y];
+    let y = y0 + j * e1[1] + i * e2[1];
+    let v = [x, y];
+    v.label = `${i},${j}`;
+    return v;
 }
 
-function getPoints(rows, cols) {
+function getPointIJ(x, y) {
+    x = x - x0;
+    y = y - y0;
+    let D = e1[0]*e2[1] - e2[0]*e1[1];
+    let j = ( e2[1]*x - e2[0]*y) / D;
+    let i = (-e1[1]*y + e1[0]*y) / D;
+   // let j = Math.round((y - y0) / e2[1]);
+    return [i, j];
+}
+
+function testTransform() {
+    let dmax = 0;
+    for (let i = - 10; i <= 10; i++) {
+        for (let j = -10; j <= 10; j++) {
+            let pt = getPointXY(i, j);
+            let [i1, j1] = getPointIJ(pt[0], pt[1]);
+            let d2 =(i - i1)*(i - i1) + (j - j1)*(j - j1);
+            console.log("i,j", i, j, "i1,j1", i1, j1, "d2:", d2);
+            if (d2 > dmax)
+                dmax = d2;
+        }
+    }
+    console.log("dmax", dmax);
+}
+
+function getPoints(rows, cols, i0 = 0, j0 = 0) {
     let pts = [];
     for (var i = 0; i < rows; i++) {
         for (var j = 0; j < cols; j++) {
-            pts.push(getPoint(i, j));
+            pts.push(getPointXY(i0+i, j0+j));
         }
     }
     return pts;
@@ -64,7 +79,8 @@ function getMidPoint(tri) {
 class Triangle {
     constructor(points, opts = {}) {
         this.points = points;
-        this.frontColor = opts.backColor;
+        this.frontColor = opts.frontColor;
+        this.backColor = opts.backColor;
         this.label = opts.label;
         this.dz = opts.dz;
     }
@@ -106,12 +122,12 @@ function getTriangleStrip(nav = "RRRLR") {
         let h2 = h + A120;
         let h3 = h - A120;
         p0 = { x, y };
-        let frontColor = "#FFAAAA";
-        let backColor = "#AAAAFF";
+        let frontColor = "#FFBBBB";
+        let backColor = "#DDDDFF";
         if (c == "S") {
             triNum++;
             tri = getTriangle([getPt(p0, r, h1), getPt(p0, r, h2), getPt(p0, r, h3)],
-            { frontColor, backColor, dz, label: `T${triNum}` });
+                { frontColor, backColor, dz, label: `T${triNum}` });
             tris.push(tri);
             continue;
         }
@@ -128,7 +144,7 @@ function getTriangleStrip(nav = "RRRLR") {
             }
             dz *= -1;
             h += Math.PI;
-            console.log("xy", xy);
+            //console.log("xy", xy);
             h1 = h;
             h2 = h + A120;
             h3 = h - A120;
@@ -145,7 +161,7 @@ function getTriangleStrip(nav = "RRRLR") {
             return;
         }
         xy = getPt(p0, r, h);
-        console.log("xy", xy);
+        //console.log("xy", xy);
         h1 = h;
         h2 = h + A120;
         h3 = h - A120;
@@ -154,7 +170,7 @@ function getTriangleStrip(nav = "RRRLR") {
         p0 = { x, y };
         triNum++;
         tri = getTriangle([getPt(p0, r, h1), getPt(p0, r, h2), getPt(p0, r, h3)],
-                            { frontColor, backColor, dz, label: `T${triNum}` });
+            { frontColor, backColor, dz, label: `T${triNum}` });
         tris.push(tri);
     }
     return tris;
@@ -210,160 +226,28 @@ function getTriangleArray(rows, cols, singleColor) {
 let triangles = getTriangleStrip("RRLRLRLR");
 triangles = getTriangleStrip("RRLLRLRURLRRLR");
 //let dotPoints = [[100,100], [200, 100], [100, 200]]
-let dotPoints = getPoints(8, 3);
-let showLabels = true;
-
-function drawTriangle(doc, tri, color = "#FF3300", lineColor = "#000000", width = 4, front = true) {
-    let pts = tri.getPoints();
-    doc
-        .polygon(...pts)
-        .lineWidth(width);
-    if (color) {
-        doc.fillAndStroke(color, lineColor);
-    }
-    else {
-        doc.stroke(lineColor);
-    }
-
-    if (!showLabels)
-        return;
-    let lab = tri.label;
-    if (!lab)
-        return;
-    let mpt = getMidPoint(tri);
-    console.log("mpt", mpt);
-    let [x, y] = mpt;
-    console.log("x,y", x, y);
-    if (!(typeof (x) == "number" && typeof (y) == "number")) {
-        console.log("*** Invalid x,y", x, y);
-        return;
-    }
-    if (x < 0 || x > 800 || y < 0 || y > 800)
-        return;
-    doc.fillColor("black");
-    let w2 = doc.widthOfString(lab) / 2.0;
-    let h2 = doc.heightOfString(lab) / 2;
-    if (front) {
-        doc.text(lab, x - w2, y - h2);
-    }
-    else { // back of sheet
-        doc.save();
-        doc.fillColor("blue");
-        doc.moveTo(x, y);
-        doc.scale(-1, 1, { origin: [x, y] });
-        doc.text(lab, x - w2, y - h2);
-        doc.restore();
-    }
-}
-
-function drawDot(doc, pt, color = "#993300") {
-    //doc.save()
-    doc.circle(pt[0], pt[1], 3)
-        .fill(color);
-}
-
+let dotPoints = getPoints(30, 30, -10, -10);
 
 function draw() {
-    console.log('Starting...');
-    console.log("size", size);
-    doc = new PDFDocument({ size });
-    let stream = doc.pipe(blobStream());
-    stream.on("finish", () => handleFinish(stream));
-    //
-    // draw front side
-    //
-    doc.text('Front ' + size, 50, 20);
-    // draw a triangle
-    let front = true;
-    for (let tri of triangles) {
-        let color = tri.frontColor;
-        if (tri.dz < 0)
-            color = tri.backColor;
-        drawTriangle(doc, tri, color, "black", 1, front);
-        drawTriangle(doc, tri, null, "#AAAAFF", 5, front);
-        drawTriangle(doc, tri, null, "black", 1, front);
+    console.log("Drawing...");
+    if (pdfViewer) {
+        pdfViewer.draw();
     }
-    //
-    // draw back side
-    //
-    doc.addPage();
-    doc.text('back ' + size, 50, 20);
-    // draw a triangle
-    doc.scale(-1, 1).translate(-doc.page.width, 0);
-    front = false;
-    //doc.text('funky text', 300, 150);
-    for (let tri of triangles) {
-        let color = tri.backColor;
-        if (tri.dz < 0)
-            color = tri.frontColor;
-        drawTriangle(doc, tri, color, "black", 1, front);
-        drawTriangle(doc, tri, null, "#AAAAFF", 5, front);
-        drawTriangle(doc, tri, null, "black", 1, front);
+    if (svgViewer) {
+        svgViewer.draw();
     }
-    doc.save();
-    doc.end();
-    console.log('Done!');
 }
 
-function drawDots(size = "LETTER") {
-    console.log('Starting...');
-    doc = new PDFDocument({ size });
-    let stream = doc.pipe(blobStream());
-    stream.on("finish", () => handleFinish(stream));
-    //
-    // draw front side
-    //
-    doc.text('Hello Dots!', 50, 50);
-    // draw a triangle
-    for (let pt of dotPoints) {
-        drawDot(doc, pt);
-    }
-    //
-    // draw back side
-    //
-    doc.addPage();
-    doc.text('Hello back dots', 50, 50);
-    doc.scale(-1, 1).translate(-doc.page.width, 0);
-    for (let pt of dotPoints) {
-        drawDot(doc, pt);
-    }
-    doc.save();
-    doc.end();
-    console.log('Done!');
+function showFaceSelection(name) {
+    console.log("face name:", name);
+    $("#faceInfo").text(name);
 }
 
-function handleFinish(stream) {
-    console.log("*****finishing");
-
-    blob = stream.toBlob("application/pdf");
-
-    // or get a blob URL for display in the browser
-    const url = stream.toBlobURL("application/pdf");
-    const iframe = document.querySelector("iframe");
-    iframe.src = url;
+function showMouseInfo(evt) {
+    if (svgViewer)
+        svgViewer.showMouseInfo(evt);
 }
 
-//const download_a = document.createElement("a");
-//document.body.appendChild(download_a);
-//download_a.style = "display: none";
-
-function download(name = "flexaTemplate.pdf") {
-    console.log("Downloading...");
-    const download_a = document.createElement("a");
-    document.body.appendChild(download_a);
-    download_a.style = "display: none";
-
-    if (!blob) {
-        alert("No PDF to download");
-        return;
-    }
-    var url = window.URL.createObjectURL(blob);
-    let a = download_a;
-    a.href = url;
-    a.download = name;
-    a.click();
-    window.URL.revokeObjectURL(url);
-}
 
 function init() {
     console.log("Initializing...");
@@ -376,6 +260,12 @@ function init() {
     $("#showLabels").change(function () {
         showLabels = $(this).prop("checked");
         console.log("showLabels", showLabels);
+        draw();
+    });
+
+    $("#showLattice").change(function () {
+        showLattice = $(this).prop("checked");
+        console.log("showLattice", showLattice);
         draw();
     });
 
