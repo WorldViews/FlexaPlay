@@ -85,22 +85,25 @@ class SVGViewer {
         }
     }
 
-    OLDaddTriGrid() {
-        for (let i = -10; i <= 20; i += 3) {
-            for (let j = -10; j <= 20; j += 3) {
-                if (!(i % 4 == 0 && j % 4 == 0)) {
-                    //continue;
-                }
+    addHexGrid() {
+        let fillFace = false;
+        for (let i = -10; i <= 20; i += 1) {
+            for (let jj = -10; jj <= 20; jj += 3) {
+                let j = jj + (i % 3);
                 let p0 = getPointXY(i, j);
-                // let p1 = getPointXY(i + 1, j);
-                let p1 = getPointXY(i + 1, j + 1);
-                let p2 = getPointXY(i + 2, j - 1);
-                let p3 = getPointXY(i + 3, j);
-                this.addEdge(p0, p1);
-                this.addEdge(p0, p2);
-                this.addEdge(p1, p2);
-                this.addEdge(p1, p3);
-                this.addEdge(p2, p3);
+                let p1 = getPointXY(i + 1, j);
+                let p2 = getPointXY(i, j + 1);
+                let p3 = getPointXY(i - 1, j + 1);
+                let p4 = getPointXY(i - 1, j);
+                let p5 = getPointXY(i, j - 1);
+                let p6 = getPointXY(i + 1, j - 1);
+                let pts = [p1, p2, p3, p4, p5, p6];
+                let fill = "none";
+                if (fillFace) {
+                    fill = ["#FFAAAA", "#AAFFAA", "#AAAAFF"][(i+3000) % 3];
+                }
+                this.addPoly(pts, `H${i}_${j}`, fill);
+                this.addDot(p0, 3, "red");
             }
         }
     }
@@ -188,7 +191,7 @@ class SVGViewer {
         this.svgcanv.appendChild(text);
     }
 
-    addDot(pt, r=2, color="red") {
+    addDot(pt, r = 2, color = "red") {
         let [x, y] = pt;
         let dot = document.createElementNS(SVGNS, "circle");
         dot.setAttribute("fill", color);
