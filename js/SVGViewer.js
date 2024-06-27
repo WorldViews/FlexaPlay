@@ -11,10 +11,37 @@ class SVGViewer {
         this.xx = 100;
     }
 
+    screenToSVG(screenX, screenY) {
+        let svg = this.svgcanv;
+        var p = svg.createSVGPoint()
+        p.x = screenX
+        p.y = screenY
+        return p.matrixTransform(svg.getScreenCTM().inverse());
+    }
+
+    SVGToScreen(svgX, svgY) {
+        let svg = this.svgcanv;
+        var p = svg.createSVGPoint()
+        p.x = svgX
+        p.y = svgY
+        return p.matrixTransform(svg.getScreenCTM());
+    }
+
+    test0() {
+        var pt = screenToSVG(20, 30);
+        console.log("screenToSVG: ", pt);
+
+        var pt = SVGToScreen(pt.x, pt.y);
+        console.log("SVGToScreen: ", pt);
+    }
+
     showMouseInfo(evt) {
         let x = evt.clientX;
         let y = evt.clientY;
-        let [i,j] = getPointIJ(x, y);
+        let p = this.screenToSVG(x, y);
+        let [i, j] = getPointIJ(p.x, p.y);
+        i = i.toFixed(2);
+        j = j.toFixed(2);
         i = Math.round(i);
         j = Math.round(j);
         let text = document.getElementById("mouseInfo");
@@ -27,6 +54,8 @@ class SVGViewer {
         }
     }
 
+
+
     draw() {
         this.clear();
         this.addTriangles();
@@ -34,14 +63,95 @@ class SVGViewer {
             this.addLattice();
         if (showLabels)
             this.addLabels()
+        if (gridType == "TRIGRID") {
+            this.addTriGrid();
+        }
+        if (gridType == "SMALLTRIGRID") {
+            this.addSmallTriGrid();
+        }
+        if (gridType == "BIGTRIGRID") {
+            this.addBigTriGrid();
+        }
+        if (gridType == "HEXGRID") {
+            this.addHexGrid();
+        }
     }
 
     addLattice() {
         let points = dotPoints;
         for (let pt of points) {
             this.addDot(pt);
+            this.addLabel(pt, pt.label);
         }
     }
+
+    OLDaddTriGrid() {
+        for (let i = -10; i <= 20; i += 3) {
+            for (let j = -10; j <= 20; j += 3) {
+                if (!(i % 4 == 0 && j % 4 == 0)) {
+                    //continue;
+                }
+                let p0 = getPointXY(i, j);
+                // let p1 = getPointXY(i + 1, j);
+                let p1 = getPointXY(i + 1, j + 1);
+                let p2 = getPointXY(i + 2, j - 1);
+                let p3 = getPointXY(i + 3, j);
+                this.addEdge(p0, p1);
+                this.addEdge(p0, p2);
+                this.addEdge(p1, p2);
+                this.addEdge(p1, p3);
+                this.addEdge(p2, p3);
+            }
+        }
+    }
+
+    addTriGrid() {
+        let j;
+        for (let i = -5; i <= 5; i += 1) {
+            for (let jj = -10; jj <= 20; jj += 3) {
+                // get center of triangle
+                j = jj + (i % 3);
+                let p0 = getPointXY(i, j);
+                let p1 = getPointXY(i, j - 1);
+                let p2 = getPointXY(i - 1, j + 1);
+                let p3 = getPointXY(i + 1, j);
+                let p4 = getPointXY(i, j + 2);
+                this.addDot(p0, 3, "green");
+                this.addEdge(p1, p2);
+                this.addEdge(p1, p3);
+                this.addEdge(p2, p3);
+                this.addEdge(p2, p4);
+                this.addEdge(p3, p4);
+            }
+        }
+    }
+
+    addSmallTriGrid() {
+        for (let i = -10; i <= 20; i++) {
+            for (let j = -10; j <= 20; j++) {
+                let p0 = getPointXY(i, j);
+                let p1 = getPointXY(i + 1, j);
+                let p2 = getPointXY(i, j + 1);
+                this.addEdge(p0, p1);
+                this.addEdge(p0, p2);
+                this.addEdge(p1, p2);
+            }
+        }
+    }
+
+    addBigTriGrid() {
+        for (let i = -10; i <= 20; i += 2) {
+            for (let j = -10; j <= 20; j += 2) {
+                let p0 = getPointXY(i, j);
+                let p1 = getPointXY(i + 2, j);
+                let p2 = getPointXY(i, j + 2);
+                this.addEdge(p0, p1);
+                this.addEdge(p0, p2);
+                this.addEdge(p1, p2);
+            }
+        }
+    }
+
 
     addTriangles(tris) {
         tris = tris || triangles;
@@ -59,14 +169,14 @@ class SVGViewer {
         for (let tri of tris) {
             let pts = tri.points;
             let label = tri.label;
-            let x = (pts[0][0] + pts[1][0] + pts[2][0])/3;
-            let y = (pts[0][1] + pts[1][1] + pts[2][1])/3;
-            this.addLabel([x,y], label);
+            let x = (pts[0][0] + pts[1][0] + pts[2][0]) / 3;
+            let y = (pts[0][1] + pts[1][1] + pts[2][1]) / 3;
+            this.addLabel([x, y], label);
         }
     }
-    
+
     addLabel(pt, label) {
-        let [x,y] = pt;
+        let [x, y] = pt;
         let text = document.createElementNS(SVGNS, "text");
         text.setAttribute("x", x);
         text.setAttribute("y", y);
@@ -78,18 +188,33 @@ class SVGViewer {
         this.svgcanv.appendChild(text);
     }
 
-    addDot(pt) {
-        let [x,y] = pt;
+    addDot(pt, r=2, color="red") {
+        let [x, y] = pt;
         let dot = document.createElementNS(SVGNS, "circle");
-        dot.setAttribute("fill", "red");
-        dot.setAttribute("stroke", "black");
+        dot.setAttribute("fill", color);
+        dot.setAttribute("stroke", color);
         dot.setAttribute("cx", x);
         dot.setAttribute("cy", y);
-        dot.setAttribute("r", 2);
+        dot.setAttribute("r", r);
         this.svgcanv.appendChild(dot);
     }
 
-    addPoly(points, name, color="pink") {
+    addEdge(p1, p2, name, color = "brown") {
+        //this.addPoly([p1, p2], name, color);
+        // targeting the svg itself
+        console.log("addEdge", p1, p2, name, color);
+        console.log("name", name)
+        // make a simple rectangle
+        let line = document.createElementNS(SVGNS, "line");
+        line.setAttribute("stroke", color);
+        line.setAttribute("x1", p1[0]);
+        line.setAttribute("y1", p1[1]);
+        line.setAttribute("x2", p2[0]);
+        line.setAttribute("y2", p2[1]);
+        this.svgcanv.appendChild(line);
+    }
+
+    addPoly(points, name, color = "pink") {
         // targeting the svg itself
         console.log("addPoly", points, name);
         if (!name) {

@@ -8,6 +8,10 @@ let blob = null;
 
 let showLattice = false;
 let showLabels = true;
+let gridType = "NOGRID";
+
+let showTriGrid = false;
+let showHexGrid = false;
 
 let svgViewer = null;
 let pdfViewer = null;
@@ -23,6 +27,8 @@ let a = Math.PI / 3;
 let s = 60;
 let x0 = 100;
 let y0 = 100;
+//x0 = 0;
+//y0 = 0;
 let e1 = [s, 0];
 let e2 = [s * Math.cos(a), s * Math.sin(a)];
 
@@ -38,9 +44,8 @@ function getPointIJ(x, y) {
     x = x - x0;
     y = y - y0;
     let D = e1[0]*e2[1] - e2[0]*e1[1];
-    let j = ( e2[1]*x - e2[0]*y) / D;
     let i = (-e1[1]*y + e1[0]*y) / D;
-   // let j = Math.round((y - y0) / e2[1]);
+    let j = ( e2[1]*x - e2[0]*y) / D;
     return [i, j];
 }
 
@@ -228,6 +233,16 @@ triangles = getTriangleStrip("RRLLRLRURLRRLR");
 //let dotPoints = [[100,100], [200, 100], [100, 200]]
 let dotPoints = getPoints(30, 30, -10, -10);
 
+function drawTriGrid() {
+    gridType = "TRIGRID";
+    draw();
+}
+
+function drawHexGrid() {
+    gridType = "HEXGRID";
+    draw();
+}
+
 function draw() {
     console.log("Drawing...");
     if (pdfViewer) {
@@ -254,6 +269,12 @@ function init() {
     $("#paperSize").change(function () {
         size = $(this).val();
         console.log("size", size);
+        draw();
+    });
+
+    $("#gridType").change(function () {
+        gridType = $(this).val();
+        console.log("gridType", gridType);
         draw();
     });
 

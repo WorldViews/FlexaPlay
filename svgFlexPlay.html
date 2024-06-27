@@ -31,9 +31,16 @@
         <div style="border-style: solid; border-width: 1; padding: 4px;">
             <button onclick="download()">Download</button>
             &nbsp;
-            <button onclick="drawDots('LEGAL')">DOTS</button>
-            &nbsp;
+ 
             <button onclick="sw.addFace()">Click</button>
+            &nbsp;
+            <select id="gridType">
+                <option value="NOGRID">No Grid</option>
+                <option value="TRIGRID">Tri Grid</option>
+                <option value="SMALLTRIGRID">Small Tri Grid</option>
+                <option value="BIGTRIGRID">Big Tri Grid</option>
+                <option value="HEXGRID">Hex Grid</option>
+            </select>
             &nbsp;
             <select id="paperSize">
                 <option value="LETTER">Letter</option>
