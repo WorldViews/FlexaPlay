@@ -57,7 +57,7 @@ function drawDotPoints(doc) {
         drawDot(doc, pt);
         let x = pt[0];
         let y = pt[1];
-         if (x < 100 || x > 500 || y < 100 || y > 400)
+        if (x < 100 || x > 500 || y < 100 || y > 400)
             continue;
         let label = pt.label;
         //label = 'bb';
@@ -66,7 +66,10 @@ function drawDotPoints(doc) {
     }
 }
 
-function pdfdraw() {
+function pdfdraw(groups = null) {
+    console.log("pdfdraw", groups);
+    if (!groups)
+        groups = [triangles];
     console.log('Starting...');
     console.log("size", size);
     doc = new PDFDocument({ size });
@@ -78,13 +81,15 @@ function pdfdraw() {
     doc.text('Front ' + size, 50, 20);
     // draw a triangle
     let front = true;
-    for (let tri of triangles) {
-        let color = tri.frontColor;
-        if (tri.dz < 0)
-            color = tri.backColor;
-        drawTriangle(doc, tri, color, "black", 1, front);
-        drawTriangle(doc, tri, null, "#AAAAFF", 5, front);
-        drawTriangle(doc, tri, null, "black", 1, front);
+    for (let triangles of groups) {
+        for (let tri of triangles) {
+            let color = tri.frontColor;
+            if (tri.dz < 0)
+                color = tri.backColor;
+            drawTriangle(doc, tri, color, "black", 1, front);
+            drawTriangle(doc, tri, null, "#AAAAFF", 5, front);
+            drawTriangle(doc, tri, null, "black", 1, front);
+        }
     }
 
     if (showLattice) {
@@ -99,13 +104,15 @@ function pdfdraw() {
     doc.scale(-1, 1).translate(-doc.page.width, 0);
     front = false;
     //doc.text('funky text', 300, 150);
-    for (let tri of triangles) {
-        let color = tri.backColor;
-        if (tri.dz < 0)
-            color = tri.frontColor;
-        drawTriangle(doc, tri, color, "black", 1, front);
-        drawTriangle(doc, tri, null, "#AAAAFF", 5, front);
-        drawTriangle(doc, tri, null, "black", 1, front);
+    for (let triangles of groups) {
+        for (let tri of triangles) {
+            let color = tri.backColor;
+            if (tri.dz < 0)
+                color = tri.frontColor;
+            drawTriangle(doc, tri, color, "black", 1, front);
+            drawTriangle(doc, tri, null, "#AAAAFF", 5, front);
+            drawTriangle(doc, tri, null, "black", 1, front);
+        }
     }
     if (showLattice) {
         drawDotPoints(doc);
@@ -178,7 +185,7 @@ class PDFViewer {
     constructor() {
     }
 
-    draw() {
-        pdfdraw();
+    draw(groups) {
+        pdfdraw(groups);
     }
 }

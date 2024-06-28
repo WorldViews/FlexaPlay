@@ -55,10 +55,19 @@ class SVGViewer {
     }
 
 
-
-    draw() {
+    draw(groups = null) {
+        console.log("SVGViewer draw groups:", groups);
         this.clear();
-        this.addTriangles();
+        if (!groups)
+            groups = [triangles];
+        this.clear();
+        for (let group of groups) {
+            this.drawGroup(group);
+        }
+    }
+
+    drawGroup(group) {
+        this.addTriangles(group);
         if (showLattice)
             this.addLattice();
         if (showLabels)
@@ -155,7 +164,6 @@ class SVGViewer {
         }
     }
 
-
     addTriangles(tris) {
         tris = tris || triangles;
         for (let tri of tris) {
@@ -205,8 +213,8 @@ class SVGViewer {
     addEdge(p1, p2, name, color = "brown") {
         //this.addPoly([p1, p2], name, color);
         // targeting the svg itself
-        console.log("addEdge", p1, p2, name, color);
-        console.log("name", name)
+        //console.log("addEdge", p1, p2, name, color);
+        //console.log("name", name)
         // make a simple rectangle
         let line = document.createElementNS(SVGNS, "line");
         line.setAttribute("stroke", color);
@@ -219,11 +227,11 @@ class SVGViewer {
 
     addPoly(points, name, color = "pink") {
         // targeting the svg itself
-        console.log("addPoly", points, name);
+        //console.log("addPoly", points, name);
         if (!name) {
             name = "B" + points[0][0];
         }
-        console.log("name", name)
+        //console.log("name", name)
         let svgcanv = this.svgcanv;
         // make a simple rectangle
         let poly = document.createElementNS(SVGNS, "polygon");

@@ -58,25 +58,10 @@
         </div>
     </div>
     <script>
-        //draw();
-
         pdfViewer = new PDFViewer();
-
-        /*
-        function showPDF() {
-            $("#pdfView").show();
-            $("#svgView").hide();
-        }
-
-        function showSVG() {
-            $("#pdfView").hide();
-            $("#svgView").show();
-        }
-        */
-        
         $(document).ready(function () {
             init();
-            pdfViewer.draw();
+            pdfViewer.draw(sheet.groups);
         });
     </script>
 </body>

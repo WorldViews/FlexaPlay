@@ -24,7 +24,9 @@ function getMidPoint(tri) {
 }
 
 let a = Math.PI / 3;
-let s = 60;
+//let s = 60;   // triangle side length
+let side_length = 60;
+let s = side_length;
 let x0 = 100;
 let y0 = 100;
 //x0 = 0;
@@ -95,6 +97,12 @@ class Triangle {
     }
 }
 
+class Sheet {
+    constructor() {
+        this.groups = [];
+    }
+}
+
 function getTriangle(points, opts) {
     return new Triangle(points, opts);
 }
@@ -107,13 +115,18 @@ function getPt(p0, r, h) {
 const A120 = 2 * Math.PI / 3.0;
 const A60 = Math.PI / 3.0;
 
-function getTriangleStrip(nav = "RRRLR") {
+function getTriangleStrip(nav = "RRRLR", ij0=[0,0]) {
     let tris = [];
-    let r = 60;
+    let r = side_length;
     let h = 0;
     let x0 = 100;
     let y0 = 100;
-    let p0 = { x: x0, y: y0 };
+    if (ij0) {
+        let pt = getPointXY(ij0[0], ij0[1]);
+        x0 = pt[0];
+        y0 = pt[1];
+    }
+    //let p0 = { x: x0, y: y0 };
     let x = x0;
     let y = y0;
     nav = nav.toUpperCase();
@@ -126,7 +139,7 @@ function getTriangleStrip(nav = "RRRLR") {
         let h1 = h;
         let h2 = h + A120;
         let h3 = h - A120;
-        p0 = { x, y };
+        let p0 = { x, y };
         let frontColor = "#FFBBBB";
         let backColor = "#DDDDFF";
         if (c == "S") {
@@ -181,6 +194,21 @@ function getTriangleStrip(nav = "RRRLR") {
     return tris;
 }
 
+function getTriHexagonTemplate(ij=[0,0]) {
+    let tris =  getTriangleStrip("SRRLRLRLRL", ij);
+    let colors = ["#CCCCCC", "#33FF33", "yellow", "blue" ]
+    let c1 = 1;
+    let c2 = 2;
+    let c3 = 3;
+    let facesBack = [c1, c2, c2, c3, c3, c1, c1, c2, c2, c3];
+    let facesFront = [0, c3, c1, c1, c2, c2, c3, c3, c1, 0];
+    for (let i = 0; i < tris.length; i++) {
+        tris[i].frontColor = colors[facesFront[i]];
+        tris[i].backColor = colors[facesBack[i]];
+    }
+    return tris;
+}
+
 function getTriangleArray(rows, cols, singleColor) {
     let x0 = 70;
     let y0 = 100;
@@ -228,8 +256,16 @@ function getTriangleArray(rows, cols, singleColor) {
 //let triangles = genTriangles(10, 4);
 //let triangles = getTriangles(10, 4, "white");
 // let triangles = getTriangleArray(14, 5, "white");
+let sheet = new Sheet();
+
 let triangles = getTriangleStrip("RRLRLRLR");
 triangles = getTriangleStrip("RRLLRLRURLRRLR");
+triangles = getTriHexagonTemplate();
+sheet.groups.push(triangles);
+sheet.groups.push(getTriHexagonTemplate([0, 2]));
+sheet.groups.push(getTriHexagonTemplate([0, 4]));
+sheet.groups.push(getTriHexagonTemplate([0, 6]));
+
 //let dotPoints = [[100,100], [200, 100], [100, 200]]
 let dotPoints = getPoints(30, 30, -10, -10);
 
@@ -246,10 +282,11 @@ function drawHexGrid() {
 function draw() {
     console.log("Drawing...");
     if (pdfViewer) {
-        pdfViewer.draw();
+        console.log("call pdfViewer groups", sheet.groups);
+        pdfViewer.draw(sheet.groups);
     }
     if (svgViewer) {
-        svgViewer.draw();
+        svgViewer.draw(sheet.groups);
     }
 }
 
@@ -294,6 +331,7 @@ function init() {
         let str = $(this).val();
         console.log("str", str);
         triangles = getTriangleStrip(str);
+        sheet.groups = [triangles];
         draw();
     });
 }
