@@ -64,11 +64,7 @@ class SVGViewer {
         for (let group of groups) {
             this.drawGroup(group);
         }
-    }
-
-    drawGroup(group) {
-        this.addTriangles(group);
-        if (showLattice)
+       if (showLattice)
             this.addLattice();
         if (showLabels)
             this.addLabels()
@@ -85,6 +81,10 @@ class SVGViewer {
             this.addHexGrid();
         }
     }
+
+    drawGroup(group) {
+        this.addTriangles(group);
+     }
 
     addLattice() {
         let points = dotPoints;
@@ -171,7 +171,7 @@ class SVGViewer {
             if (tri.dz < 0) {
                 color = tri.backColor;
             }
-            this.addPoly(tri.points, tri.label, color);
+            this.addPoly(tri.points, tri.name, color);
         }
     }
 

@@ -25,7 +25,7 @@ function getMidPoint(tri) {
 
 let a = Math.PI / 3;
 //let s = 60;   // triangle side length
-let side_length = 100;
+let side_length = 60;
 let s = side_length;
 let x0 = 80;
 let y0 = 120;
@@ -89,6 +89,9 @@ class Triangle {
         this.frontColor = opts.frontColor;
         this.backColor = opts.backColor;
         this.label = opts.label;
+        this.name = opts.name;
+        this.dir = opts.dir;
+        this.ij = opts.ij;
         this.dz = opts.dz;
     }
 
@@ -103,8 +106,14 @@ class Sheet {
     }
 }
 
+let triMap = {};
+
 function getTriangle(points, opts) {
-    return new Triangle(points, opts);
+    let tri = new Triangle(points, opts);
+    if (opts.name) {
+        triMap[opts.name] = tri;
+    }
+    return tri;
 }
 
 // find point distance r from p0 in direction h
@@ -126,6 +135,7 @@ function getTriangleStrip(nav = "RRRLR", ij0=[0,0]) {
         x0 = pt[0];
         y0 = pt[1];
     }
+    let [i,j] = ij0;
     //let p0 = { x: x0, y: y0 };
     let x = x0;
     let y = y0;
@@ -133,27 +143,32 @@ function getTriangleStrip(nav = "RRRLR", ij0=[0,0]) {
     let xy = null;
     let tri = null;
     let triNum = 0;
+    let dir = 0;
     let dz = 1;
-    for (let i = 0; i < nav.length; i++) {
-        let c = nav[i];
+    for (let k = 0; k < nav.length; k++) {
+        let c = nav[k];
         let h1 = h;
         let h2 = h + A120;
         let h3 = h - A120;
         let p0 = { x, y };
         let frontColor = "#FFBBBB";
         let backColor = "#DDDDFF";
+        let name = `T${triNum}`;
+        let label = `T${i},${j}`;
         if (c == "S") {
             triNum++;
             tri = getTriangle([getPt(p0, r, h1), getPt(p0, r, h2), getPt(p0, r, h3)],
-                { frontColor, backColor, dz, label: `T${triNum}` });
+                { ij: [i,j], dir, frontColor, backColor, dz, label, name });
             tris.push(tri);
             continue;
         }
         if (c == "R") {
             h += A60;
+            dir += 1;
         }
         else if (c == "L") {
             h -= A60;
+            dir -= 1;
         }
         else if (c == "U") {
             if (tri == null) {
@@ -186,9 +201,12 @@ function getTriangleStrip(nav = "RRRLR", ij0=[0,0]) {
         x = xy[0];
         y = xy[1];
         p0 = { x, y };
+        let ij = getPointIJ(x, y);
+        ij = ij.map(Math.round);
+        label = `T${ij[0]},${ij[1]}`;
         triNum++;
         tri = getTriangle([getPt(p0, r, h1), getPt(p0, r, h2), getPt(p0, r, h3)],
-            { frontColor, backColor, dz, label: `T${triNum}` });
+            { frontColor, backColor, dz, dir, ij, label, name });
         tris.push(tri);
     }
     return tris;
@@ -294,7 +312,13 @@ function draw() {
 
 function showFaceSelection(name) {
     console.log("face name:", name);
-    $("#faceInfo").text(name);
+    let tri = triMap[name];
+    let str = name;
+    if (tri) {
+        console.log("tri", tri);
+        str = `name: ${name} ${tri.label} ij: ${tri.ij} dz: ${tri.dz} dir: ${tri.dir}  \n`;
+    }
+    $("#faceInfo").text(str);
 }
 
 function showMouseInfo(evt) {
