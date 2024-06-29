@@ -3,11 +3,11 @@
 "use strict";
 
 let doc = null;
-let size = "LETTER";
+let size = "LEGAL";
 let blob = null;
 
 let showLattice = false;
-let showLabels = true;
+let showLabels = false;
 let gridType = "NOGRID";
 
 let showTriGrid = false;
@@ -25,10 +25,10 @@ function getMidPoint(tri) {
 
 let a = Math.PI / 3;
 //let s = 60;   // triangle side length
-let side_length = 60;
+let side_length = 100;
 let s = side_length;
-let x0 = 100;
-let y0 = 100;
+let x0 = 80;
+let y0 = 120;
 //x0 = 0;
 //y0 = 0;
 let e1 = [s, 0];
@@ -196,7 +196,8 @@ function getTriangleStrip(nav = "RRRLR", ij0=[0,0]) {
 
 function getTriHexagonTemplate(ij=[0,0]) {
     let tris =  getTriangleStrip("SRRLRLRLRL", ij);
-    let colors = ["#CCCCCC", "#33FF33", "yellow", "blue" ]
+    //let colors = ["#CCCCCC", "#33FF33", "yellow", "blue" ]
+    let colors = ["#CCCCCC", "#FFBBBB", "#BBBBFF", "#BBFFBB"];
     let c1 = 1;
     let c2 = 2;
     let c3 = 3;
@@ -216,7 +217,8 @@ function getTriangleArray(rows, cols, singleColor) {
     //let dx = 2*Math.cos(Math.PI / 3) * dy;
     let dx = dy * Math.sqrt(3) / 2;
     let tris = [];
-    let colors = ["#FF3300", "#0033FF", "#33FF33"];
+    //let colors = ["#FF3300", "#0033FF", "#33FF33"];
+    let colors = ["#FFAAAA", "#AAAAFF", "#AAFFAA"];
 
     for (let k = 0; k < rows; k++) {
         for (let j = 0; j < cols; j++) {
@@ -263,8 +265,8 @@ triangles = getTriangleStrip("RRLLRLRURLRRLR");
 triangles = getTriHexagonTemplate();
 sheet.groups.push(triangles);
 sheet.groups.push(getTriHexagonTemplate([0, 2]));
+//sheet.groups.push(getTriHexagonTemplate([0, 4]));
 sheet.groups.push(getTriHexagonTemplate([0, 4]));
-sheet.groups.push(getTriHexagonTemplate([0, 6]));
 
 //let dotPoints = [[100,100], [200, 100], [100, 200]]
 let dotPoints = getPoints(30, 30, -10, -10);

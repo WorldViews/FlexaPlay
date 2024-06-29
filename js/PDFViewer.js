@@ -78,7 +78,7 @@ function pdfdraw(groups = null) {
     //
     // draw front side
     //
-    doc.text('Front ' + size, 50, 20);
+    doc.text('front ' + size, 50, 10);
     // draw a triangle
     let front = true;
     for (let triangles of groups) {
@@ -99,7 +99,7 @@ function pdfdraw(groups = null) {
     // draw back side
     //
     doc.addPage();
-    doc.text('back ' + size, 50, 20);
+    doc.text('back ' + size, 50, 10);
     // draw a triangle
     doc.scale(-1, 1).translate(-doc.page.width, 0);
     front = false;
