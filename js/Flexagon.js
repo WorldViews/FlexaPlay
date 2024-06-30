@@ -3,7 +3,8 @@
 "use strict";
 
 let doc = null;
-let size = "LEGAL";
+//let size = "LEGAL";
+let size = "LETTER";
 let blob = null;
 
 let showLattice = false;
@@ -28,7 +29,7 @@ let a = Math.PI / 3;
 let side_length = 60;
 let s = side_length;
 let x0 = 80;
-let y0 = 120;
+let y0 = 100;
 //x0 = 0;
 //y0 = 0;
 let e1 = [s, 0];
@@ -229,17 +230,19 @@ function getTriHexagonTemplate(ij=[0,0]) {
 }
 
 function getTriangleArray(rows, cols, singleColor) {
-    let x0 = 70;
-    let y0 = 100;
-    let dy = 100;
+    let x0 = 40;
+    let y0 = 40;
+    let dy = 60;
     //let dx = 2*Math.cos(Math.PI / 3) * dy;
     let dx = dy * Math.sqrt(3) / 2;
+    let sheet = new Sheet();
     let tris = [];
     //let colors = ["#FF3300", "#0033FF", "#33FF33"];
     let colors = ["#FFAAAA", "#AAAAFF", "#AAFFAA"];
 
     for (let k = 0; k < rows; k++) {
         for (let j = 0; j < cols; j++) {
+            let label = `${k},${j}`;
             if ((k + j) % 2 == 0) {
                 let i = k / 2;
                 let y1 = y0 + i * dy;
@@ -251,7 +254,8 @@ function getTriangleArray(rows, cols, singleColor) {
                 let color = colors[(i + j) % 3];
                 if (singleColor)
                     color = singleColor;
-                let tri = getTriangle([[x1, y1], [x2, y2], [x3, y3]], { color, label: `${k},${j}` });
+                let tri = getTriangle([[x1, y1], [x2, y2], [x3, y3]],
+                    { frontColor: color, backColor: color, label });
                 tris.push(tri);
             }
             else {
@@ -265,12 +269,14 @@ function getTriangleArray(rows, cols, singleColor) {
                 let color = colors[(i + j) % 3];
                 if (singleColor)
                     color = singleColor;
-                let tri = getTriangle([[x1, y1], [x2, y2], [x3, y3]], { color, label: `${k},${j}` });
+                let tri = getTriangle([[x1, y1], [x2, y2], [x3, y3]],
+                    { frontColor: color, backColor: color, label });
                 tris.push(tri);
             }
         }
     }
-    return tris;
+    sheet.groups.push(tris);
+    return sheet;
 }
 
 //let triangles = genTriangles(10, 4);
@@ -285,6 +291,8 @@ sheet.groups.push(triangles);
 sheet.groups.push(getTriHexagonTemplate([0, 2]));
 //sheet.groups.push(getTriHexagonTemplate([0, 4]));
 sheet.groups.push(getTriHexagonTemplate([0, 4]));
+
+//sheet = getTriangleArray(23, 10, "white");
 
 //let dotPoints = [[100,100], [200, 100], [100, 200]]
 let dotPoints = getPoints(30, 30, -10, -10);
