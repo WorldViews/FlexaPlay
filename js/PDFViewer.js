@@ -4,6 +4,7 @@
 
 
 function drawTriangle(doc, tri, color = "#FF33FF", lineColor = "#000000", width = 4, front = true) {
+    console.log("drawTriangle", tri);
     let pts = tri.getPoints();
     doc
         .polygon(...pts)
@@ -20,7 +21,7 @@ function drawTriangle(doc, tri, color = "#FF33FF", lineColor = "#000000", width 
     let lab = tri.label;
     if (!lab)
         return;
-    let mpt = getMidPoint(tri);
+    let mpt = tri.getMidPoint();
     //console.log("mpt", mpt);
     let [x, y] = mpt;
     //console.log("x,y", x, y);
@@ -68,8 +69,10 @@ function drawDotPoints(doc) {
 
 function pdfdraw(groups = null) {
     console.log("pdfdraw", groups);
-    if (!groups)
-        groups = [triangles];
+    if (!groups) {
+        alert("depicate empty groups to pdfdraw");
+        groups = new Group([triangles]);
+    }
     console.log('Starting...');
     console.log("size", size);
     doc = new PDFDocument({ size });
@@ -81,7 +84,8 @@ function pdfdraw(groups = null) {
     doc.text('front ' + size, 50, 10);
     // draw a triangle
     let front = true;
-    for (let triangles of groups) {
+    for (let group of groups) {
+        let triangles = group.getTriangles();
         for (let tri of triangles) {
             let color = tri.frontColor;
             if (tri.dz < 0)
@@ -95,6 +99,7 @@ function pdfdraw(groups = null) {
     if (showLattice) {
         drawDotPoints(doc);
     }
+
     //
     // draw back side
     //
@@ -104,7 +109,8 @@ function pdfdraw(groups = null) {
     doc.scale(-1, 1).translate(-doc.page.width, 0);
     front = false;
     //doc.text('funky text', 300, 150);
-    for (let triangles of groups) {
+    for (let group of groups) {
+        let triangles = group.getTriangles();
         for (let tri of triangles) {
             let color = tri.backColor;
             if (tri.dz < 0)
@@ -185,7 +191,8 @@ class PDFViewer {
     constructor() {
     }
 
-    draw(groups) {
-        pdfdraw(groups);
+    draw(sheet) {
+        console.log("PDFViewer draw sheet:", sheet);
+        pdfdraw(sheet.groups);
     }
 }

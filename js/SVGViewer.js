@@ -39,7 +39,7 @@ class SVGViewer {
         let x = evt.clientX;
         let y = evt.clientY;
         let p = this.screenToSVG(x, y);
-        let [i, j] = getPointIJ(p.x, p.y);
+        let [i, j] = app.getPointIJ(p.x, p.y);
         i = i.toFixed(2);
         j = j.toFixed(2);
         i = Math.round(i);
@@ -54,20 +54,23 @@ class SVGViewer {
         }
     }
 
-
-    draw(groups = null) {
-        console.log("SVGViewer draw groups:", groups);
+ //   draw(groups = null) {
+    draw(sheet) {
+        console.log("SVGViewer draw sheet:", sheet);
+        let groups = sheet.groups;
         this.clear();
-        if (!groups)
-            groups = [triangles];
+        if (!groups) {
+            alert("depicate empty groups to svgdraw");
+            groups = new Group([triangles]);
+        }
         this.clear();
         for (let group of groups) {
             this.drawGroup(group);
         }
-       if (showLattice)
+        if (showLattice)
             this.addLattice();
         if (showLabels)
-            this.addLabels()
+            this.addLabels(groups)
         if (gridType == "TRIGRID") {
             this.addTriGrid();
         }
@@ -83,8 +86,8 @@ class SVGViewer {
     }
 
     drawGroup(group) {
-        this.addTriangles(group);
-     }
+        this.addTriangles(group.getTriangles());
+    }
 
     addLattice() {
         let points = dotPoints;
@@ -109,7 +112,7 @@ class SVGViewer {
                 let pts = [p1, p2, p3, p4, p5, p6];
                 let fill = "none";
                 if (fillFace) {
-                    fill = ["#FFAAAA", "#AAFFAA", "#AAAAFF"][(i+3000) % 3];
+                    fill = ["#FFAAAA", "#AAFFAA", "#AAAAFF"][(i + 3000) % 3];
                 }
                 this.addPoly(pts, `H${i}_${j}`, fill);
                 this.addDot(p0, 3, "red");
@@ -175,14 +178,16 @@ class SVGViewer {
         }
     }
 
-    addLabels(tris) {
-        tris = tris || triangles;
-        for (let tri of tris) {
-            let pts = tri.points;
-            let label = tri.label;
-            let x = (pts[0][0] + pts[1][0] + pts[2][0]) / 3;
-            let y = (pts[0][1] + pts[1][1] + pts[2][1]) / 3;
-            this.addLabel([x, y], label);
+    addLabels(groups) {
+        for (let group of groups) {
+            let tris = group.triangles;
+            for (let tri of tris) {
+                let pts = tri.points;
+                let label = tri.label;
+                let x = (pts[0][0] + pts[1][0] + pts[2][0]) / 3;
+                let y = (pts[0][1] + pts[1][1] + pts[2][1]) / 3;
+                this.addLabel([x, y], label);
+            }
         }
     }
 
