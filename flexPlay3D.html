@@ -13,14 +13,25 @@
     <script src="js/Flexagon.js"></script>
     <script src="js/PDFViewer.js"></script>
     <script src="js/SVGViewer.js"></script>
-    <script type="importmap">
+
+    <script type="XXXimportmap">
         {
             "imports": {
-                "three": "./js/threejs/build/three.module.js",
+                 "three": "./js/threejs/build/three.module.js",
                 "three/addons/": "./js/threejs/jsm/"
             }
         }
-        </script>
+    </script>
+    
+    <script type="importmap">
+        {
+          "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
+          }
+        }
+    </script>
+
     <script type="module" src="js/ThreeJSViewer.js">
     </script>
 </head>
