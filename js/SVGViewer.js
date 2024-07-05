@@ -99,6 +99,7 @@ class SVGViewer {
 
     addHexGrid() {
         let fillFace = false;
+        let getPointXY = app.getPointXY;
         for (let i = -10; i <= 20; i += 1) {
             for (let jj = -10; jj <= 20; jj += 3) {
                 let j = jj + (i % 3);
@@ -122,6 +123,7 @@ class SVGViewer {
 
     addTriGrid() {
         let j;
+        let getPointXY = app.getPointXY;
         for (let i = -5; i <= 5; i += 1) {
             for (let jj = -10; jj <= 20; jj += 3) {
                 // get center of triangle
@@ -142,6 +144,7 @@ class SVGViewer {
     }
 
     addSmallTriGrid() {
+        let getPointXY = app.getPointXY;
         for (let i = -10; i <= 20; i++) {
             for (let j = -10; j <= 20; j++) {
                 let p0 = getPointXY(i, j);
@@ -155,6 +158,7 @@ class SVGViewer {
     }
 
     addBigTriGrid() {
+        let getPointXY = app.getPointXY;
         for (let i = -10; i <= 20; i += 2) {
             for (let j = -10; j <= 20; j += 2) {
                 let p0 = getPointXY(i, j);
@@ -274,5 +278,24 @@ class SVGViewer {
         svg.setAttribute("height", "100%");
         svg.setAttribute("viewBox", "0 0 100 100");
         svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+    }
+
+    download(name = "flexaTemplate.svg") {
+        console.log("Downloading...");
+        const download_a = document.createElement("a");
+        document.body.appendChild(download_a);
+        download_a.style = "display: none";
+    
+        let blob = new Blob([this.svgcanv.outerHTML], { type: "image/svg+xml" });
+        if (!blob) {
+            alert("No SVG to download");
+            return;
+        }
+        var url = window.URL.createObjectURL(blob);
+        let a = download_a;
+        a.href = url;
+        a.download = name;
+        a.click();
+        window.URL.revokeObjectURL(url);
     }
 }
