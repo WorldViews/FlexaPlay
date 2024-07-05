@@ -4,7 +4,7 @@
 
 
 function drawTriangle(doc, tri, color = "#FF33FF", lineColor = "#000000", width = 4, front = true) {
-    console.log("drawTriangle", tri);
+    //console.log("drawTriangle", tri);
     let pts = tri.getPoints();
     doc
         .polygon(...pts)
