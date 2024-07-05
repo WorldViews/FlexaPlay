@@ -4,7 +4,11 @@
 
 let doc = null;
 //let size = "LEGAL";
-let size = "LETTER";
+const LEGAL = "LEGAL";
+const LETTER = "LETTER";
+const TABLOID = "TABLOID";
+
+let size = LETTER;
 let blob = null;
 
 let showLattice = false;
@@ -16,6 +20,7 @@ let showHexGrid = false;
 
 let svgViewer = null;
 let pdfViewer = null;
+let threeJSViewer = null;
 
 const A60 = Math.PI / 3;
 const A120 = 2 * Math.PI / 3;
@@ -337,6 +342,10 @@ function draw() {
         console.log("call svgViewer sheet", sheet);
         svgViewer.draw(sheet);
     }
+    if (threeJSViewer) {
+        console.log("call threeJSViewer sheet", sheet);
+        threeJSViewer.draw(sheet);
+    }
 }
 
 function showFaceSelection(name) {
@@ -358,6 +367,15 @@ function showMouseInfo(evt) {
 
 function init() {
     console.log("Initializing...");
+    jqinit();
+}
+
+function jqinit() {
+    $("#paperSize").val(size);
+    $("#gridType").val(gridType);
+    $("#showLabels").prop("checked", showLabels);
+    $("#showLattice").prop("checked", showLattice);
+
     $("#paperSize").change(function () {
         size = $(this).val();
         console.log("size", size);
