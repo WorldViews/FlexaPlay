@@ -1,0 +1,86 @@
+<html>
+
+<head>
+    <title>View PDF Cutouts</title>
+    <!--
+        https://codepen.io/blikblum/pen/gJNWMg
+        include jquery from cdn
+
+    -->
+    <script src="js/pdfkit.standalone.js"></script>
+    <script src="js/blob-stream.js"></script>
+    <script src="js/jquery-3.3.1.js"></script>
+    <script src="js/Flexagon.js"></script>
+    <script src="js/PDFViewer.js"></script>
+    <script src="js/SVGViewer.js"></script>
+
+    <script type="importmap">
+        {
+          "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
+          }
+        }
+    </script>
+
+    <script type="module" src="js/ThreeJSViewer.js">
+    </script>
+</head>
+
+<body>
+    <div>
+        <h3>Flex Play Tool</h3>
+        <div style="border-style: solid; border-width: 1; padding: 4px;">
+            <button onclick="download()">Download</button>
+            &nbsp;
+            <select id="paperSize">
+                <option value="LETTER">Letter</option>
+                <option value="TABLOID">Tabloid</option>
+                <option value="LEGAL">Legal</option>
+            </select>
+            &nbsp;
+            <input type="checkbox" id="showLabels" checked> Labels
+            &nbsp;
+            <input type="checkbox" id="showLattice"> Lattice
+            &nbsp;
+            <input type="text" id="defstr" value="LRLR">
+            &nbsp;
+            <button onclick="startAnim()">3D</button>
+            &nbsp;&nbsp;
+            <span id="faceInfo">face-info</span>
+            &nbsp;&nbsp;
+            <span id="mouseInfo">mouse-info</span>
+        </div>
+        <div id="viewWin">
+            <div id="threeJSView">
+                <h3>3D View</h3>
+                <div id="container"></div>
+                <div id="info">
+                    <a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - SVGLoader
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+
+        function showMouseInfo(evt) {
+            svgViewer.showMouseInfo(evt);
+        }
+
+        function startAnim() {
+            console.log("startAnim");
+            tjs.addMobius();
+        }
+
+
+        $(document).ready(function () {
+            threeJSViewer = new ThreeJSViewer();
+            window.tjs = threeJSViewer;
+            init();
+            draw();
+            tjs.addMobius();
+        });
+    </script>
+</body>
+
+</html>

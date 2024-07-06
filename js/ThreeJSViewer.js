@@ -35,19 +35,55 @@ class ThreeJSViewer {
             console.log("tri", tri);
             let pts = tri.points;
             console.log(" pts:", pts);
+            let h = 10;
             let f = 0.1;
             let color = tri.frontColor;
             console.log("color", color);
             addTriangle(scene, [
-                [f*pts[0][0], f*pts[0][1]],
-                [f*pts[1][0], f*pts[1][1]],
-                [f*pts[2][0], f*pts[2][1]]
+                [f * pts[0][0], f * pts[0][1], h],
+                [f * pts[1][0], f * pts[1][1], h],
+                [f * pts[2][0], f * pts[2][1], h]
             ], color);
         }
     }
 
-    add() {
-        addTriangle(scene, [[-20, -20], [-40, -20], [-20, -40]], 0x00ffff);
+    // add() {
+    //    alert("sss");
+    //    addTriangle(scene, [[-20, -20], [-40, -20], [-20, -40]], 0x00ffff);
+    //}
+
+    addMobiusXXX() {
+        console.log("addMobius");
+        addTriangle(scene, [[-20, -20, 0], [-40, -20, 0], [-40, -10, 10]], 0x00ffff);
+        render();
+    }
+
+    addMobius() {
+        console.log("----------------------------------------------------");
+        console.log("addMobius");
+        let h1 = 1;
+        let h2 = 15;
+        let n = 8;
+        let r = 20;
+        let rpts = [];
+        for (var i = 0; i <= n; i++) {
+            let t = i / n;
+            let x = r * Math.cos(2 * Math.PI * t);
+            let y = r * Math.sin(2 * Math.PI * t);
+            rpts.push([x, y, h1]);
+        }
+        if (1) {
+            for (var i = 0; i < n; i++) {
+                let p1 = rpts[i];
+                let p2 = rpts[i + 1];
+                let p3;
+                p3 = [p1[0], p1[1], h2];
+                addTriangle(scene, [p1, p2, p3], 0x0000ff);
+                p1 = [p2[0], p2[1], h2];
+                addTriangle(scene, [p1, p2, p3], 0xffaaaa);
+            }
+        }
+        render();
     }
 }
 
@@ -88,14 +124,6 @@ function init() {
         strokesWireframe: false
     };
 
-    addTriangles();
-}
-
-
-function addTriangles() {
-    console.log("addTriangles");
-    //
-
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xb0b0b0);
 
@@ -105,12 +133,22 @@ function addTriangles() {
     helper.rotation.x = Math.PI / 2;
     scene.add(helper);
 
+    //addTriangles();
+    render();
+}
 
-    let p1 = [0, 0];
-    let p2 = [10, 0];
-    let p3 = [0, 10];
+
+function addTriangles() {
+    console.log("addTriangles");
+    //
+
+
+    let h = 1;
+    let p1 = [0, 0, h];
+    let p2 = [10, 0, h];
+    let p3 = [0, 10, h];
     addTriangle(scene, [p1, p2, p3], 0xff0000);
-    addTriangle(scene, [[20, 20], [30, 20], [20, 30]], 0x00ff00);
+    addTriangle(scene, [[20, 20, h], [30, 20, h], [20, 30, h]], 0x00ff00);
     addTriangle(scene, [[50, 60], [50, 90], [70, 6]], 0x00ffff);
 
     render();
@@ -126,16 +164,17 @@ function addTriangle(scene, pts, frontColor, backColor) {
 
     // create a simple square shape. We duplicate the top left and bottom right
     // vertices because each vertex needs to appear once per triangle.
-    let s = 10;
-    let h = 1;
     let p1 = pts[0];
     let p2 = pts[1];
     let p3 = pts[2];
     const vertices = new Float32Array([
-        p1[0], p1[1], h, // v0
-        p2[0], p2[1], h, // v1
-        p3[0], p3[1], h, // v2
+        p1[0], p1[1], p1[2], // v0
+        p2[0], p2[1], p2[2], // v1
+        p3[0], p3[1], p3[2], // v2
     ]);
+    console.log("p1:", p1[0], p1[1], p1[2]);
+    console.log("p2:", p2[0], p2[1], p2[2]);
+    console.log("p3:", p3[0], p3[1], p3[2]);
 
     let indices = new Uint16Array([
         0, 1, 2, // first triangle
@@ -146,6 +185,9 @@ function addTriangle(scene, pts, frontColor, backColor) {
     // itemSize = 3 because there are 3 values (components) per vertex
     geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
     geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+    window.geometry = geometry;
+    //geometry.computeFaceNormals();
+    geometry.computeVertexNormals();
     console.log("geometry", geometry);
     console.log("faces", geometry.faces);
     //geometry.faces[0].matererialIndex = 0;
