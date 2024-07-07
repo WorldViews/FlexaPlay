@@ -45,7 +45,7 @@
             &nbsp;
             <input type="text" id="defstr" value="LRLR">
             &nbsp;
-            <button onclick="startAnim()">3D</button>
+            <button id="runButton" onclick="startAnim()">Run</button>
             &nbsp;&nbsp;
             <span id="faceInfo">face-info</span>
             &nbsp;&nbsp;
@@ -69,7 +69,13 @@
 
         function startAnim() {
             console.log("startAnim");
-            tjs.addMobius();
+            if (tjs.running) {
+                $('#runButton').html('Run');
+                tjs.stop();
+                return;
+            }
+            $('#runButton').html('Stop');
+            tjs.run();
         }
 
 
