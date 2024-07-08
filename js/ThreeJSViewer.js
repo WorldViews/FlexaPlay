@@ -1,5 +1,6 @@
 
 
+"use strict";
 
 import * as THREE from 'three';
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
@@ -24,6 +25,85 @@ function torus(u, v, r1 = 80, r2 = 20) {
     let z = r2 * Math.sin(v);
     return [x, y, z];
 }
+
+class Hexagon {
+    constructor() {
+        this.phi = 30 * Math.PI / 180;
+        this.points = [];
+        this.tris = [];
+        this.dots = [];
+        this.showTris = true;
+        this.showDots = true;
+    }
+
+    clear() {
+        console.log("clear");
+        for (let tri of this.tris) {
+            scene.remove(tri);
+        }
+        this.tris = [];
+        for (let dot of this.dots) {
+            scene.remove(dot);
+        }
+        this.dots = [];
+        render();
+    }
+
+    add(scene) {
+        console.log("hexagon.add", scene);
+        let h = 1;
+        let r = 30;
+        let p0 = [0, 0, h];
+        this.points = [p0];
+        let phi = this.phi;
+        console.log("phi:", phi);
+        let rho, h2;
+        for (let i = 0; i < 6; i++) {
+            if (i % 2) {
+                rho = r * Math.cos(phi);
+                h2 = r * Math.sin(phi);
+            }
+            else {
+                rho = r;
+                h2 = 0;
+            }
+            let a = i * Math.PI / 3;
+            let x = rho * Math.cos(a);
+            let y = rho * Math.sin(a);
+            let pt = [x, y, h + h2];
+            this.points.push(pt);
+        }
+        if (this.showDots) {
+            for (let pt of this.points) {
+                let dot = addDot(scene, pt, 0xff0000);
+                this.dots.push(dot);
+            }
+        }
+        if (this.showTris) {
+            let p0 = this.points[0];
+            for (let i = 0; i < 6; i++) {
+                let p1 = this.points[i + 1];
+                let p2 = this.points[(i + 1) % 6 + 1];
+                let c = i % 2 ? 0x00ff00 : 0xff0000;
+                console.log("p0:", p0, "p1:", p1, "p2:", p2, "c:", c);
+                let tri = addTriangle(scene, [p0, p1, p2], c);
+                this.tris.push(tri);
+            }
+        }
+
+        render();
+    }
+
+    tick() {
+        console.log("Hexagon.tick");
+        if (this.tris.length > 0 || this.dots.length > 0) {
+            this.clear();
+        }
+        this.add(scene);
+        render();
+    }
+}
+
 
 class Mobius {
 
@@ -117,14 +197,15 @@ class ThreeJSViewer {
         console.log("ThreeJSViewer constructor");
         this.running = false;
         this.mobius = null;
-        this.mobiTris = [];
-        this.mobiPhi = 0;
+        this.hexagon = null;
         guiData = {
             currentURL: 'models/svg/tiger.svg',
             numSegs: 20,
             showFaces: true,
             showDots: true,
-            twists: 1.0
+            showSheet: false,
+            twists: 1.0,
+            phi: 0
         }
         this.guiData = guiData;
         this.createGUI();
@@ -134,8 +215,9 @@ class ThreeJSViewer {
         console.log("createGUI");
         if (gui) gui.destroy();
         gui = new GUI();
-        let self = this;
-        let update = e => self.update(e);
+        //let self = this;
+        //let update = e => self.update(e);
+        let update = this.update.bind(this);
         gui.add(guiData, 'currentURL', {
             'Tiger': 'models/svg/tiger.svg',
             'Joins and caps': 'models/svg/lineJoinsAndCaps.svg',
@@ -160,8 +242,10 @@ class ThreeJSViewer {
             '2': 2,
             '3': 3,
         }).name('Twists').onChange(update);
+        gui.add(guiData, 'phi', 0, 2 * Math.PI).name('phi').onChange(update);
         gui.add(guiData, 'showFaces').name('Show Triangles').onChange(update);
         gui.add(guiData, 'showDots').name('Show Points').onChange(update);
+        gui.add(guiData, 'showSheet').name('Show Sheet').onChange(update);
     }
 
     update() {
@@ -174,11 +258,26 @@ class ThreeJSViewer {
         this.mobius.showTris = guiData.showFaces;
         this.mobius.ntwists = guiData.twists;
         this.mobius.numSegs = guiData.numSegs;
+        this.mobius.phi = guiData.phi;
+        if (this.hexagon) {
+            this.hexagon.showDots = guiData.showDots;
+            this.hexagon.showTris = guiData.showFaces;
+            this.hexagon.phi = guiData.phi;
+        }
         this.tick();
     }
 
     draw(sheet) {
         console.log("ThreeJSViewer draw", sheet);
+        if (this.guiData.showSheet) {
+            this.drawSheet(sheet);
+        }
+        render();
+    }
+
+    drawSheet(sheet) {
+        console.log("ThreeJSViewer drawSheet", sheet);
+        this.clear();
         // draw for each triangle
         for (let group of sheet.groups) {
             console.log("tjs.draw group", group);
@@ -206,110 +305,10 @@ class ThreeJSViewer {
     }
 
 
-    addMobiusOLD() {
-        console.log("----------------------------------------------------");
-        console.log("addMobius");
-        let h1 = 1;
-        let h2 = 20;
-        let n = 10;
-        let r = 40;
-        let rpts = [];
-        for (var i = 0; i <= n; i++) {
-            let t = i / n;
-            let x = r * Math.cos(2 * Math.PI * t);
-            let y = r * Math.sin(2 * Math.PI * t);
-            rpts.push([x, y, h1]);
-        }
-        let rpts2 = [];
-        for (var i = 0; i <= n; i++) {
-            let t = (i + 0.5) / n;
-            let x = r * Math.cos(2 * Math.PI * t);
-            let y = r * Math.sin(2 * Math.PI * t);
-            rpts2.push([x, y, h2]);
-        }
-        let rpts1 = rpts;
-        if (1) {
-            for (var i = 0; i < n; i++) {
-                let p1 = rpts1[i];
-                let p2 = rpts2[i];
-                let p3 = rpts1[i + 1];
-                let p4 = rpts2[i + 1];
-                addTriangle(scene, [p1, p2, p3], 0x0000ff);
-                addTriangle(scene, [p2, p3, p4], 0xff3333);
-            }
-        }
-        render();
-    }
-
-    addMobius2() {
-        console.log("----------------------------------------------------");
-        console.log("addMobius");
-        let n = 10;
-        let r = 40;
-        let ntwists = 1;
-        let rpts1 = [];
-        let rpts2 = [];
-        for (var i = 0; i <= n; i++) {
-            let t1 = i / n;
-            let u1 = 2 * Math.PI * t1;
-            let v1 = 0 + ntwists * t1 * Math.PI;
-            rpts1.push(torus(u1, v1, r, 10));
-            let t2 = (i + 0.5) / n;
-            let u2 = 2 * Math.PI * t2;
-            let v2 = v1 + Math.PI;
-            rpts2.push(torus(u2, v2, r, 10));
-        }
-
-        for (var i = 0; i < n; i++) {
-            let p1 = rpts1[i];
-            let p2 = rpts2[i];
-            let p3 = rpts1[i + 1];
-            let p4 = rpts2[i + 1];
-            addTriangle(scene, [p1, p2, p3], 0x0000ff);
-            addTriangle(scene, [p2, p3, p4], 0xff3333);
-        }
-        render();
-    }
-
     clear() {
         console.log("clear");
-        for (let tri of this.mobiTris) {
-            scene.remove(tri);
-        }
-        this.mobiTris = [];
-        render();
-    }
-
-    addMobiusAlt(phi = 0) {
-        console.log("----------------------------------------------------");
-        console.log("addMobius");
-        let n = 30;
-        let r1 = 50;
-        let r2 = 8;
-        let ntwists = 0.5;
-        let rpts1 = [];
-        let rpts2 = [];
-        //let phi = 180 * Math.PI / 180;
-        for (var i = 0; i <= n; i++) {
-            let t1 = i / n;
-            let u1 = 2 * Math.PI * t1;
-            let v1 = phi + ntwists * t1 * 2 * Math.PI;
-            rpts1.push(torus(u1, v1, r1, r2));
-            let t2 = (i + 1) / n;
-            let u2 = 2 * Math.PI * t2;
-            let v2 = v1 + A90;
-            rpts2.push(torus(u2, v2, r1, r2));
-        }
-
-        for (var i = 0; i < n; i++) {
-            let p1 = rpts1[i];
-            let p2 = rpts2[i];
-            let p3 = rpts1[i + 1];
-            let p4 = rpts2[i + 1];
-            let tri1 = addTriangle(scene, [p1, p2, p3], 0x0000ff);
-            let tri2 = addTriangle(scene, [p2, p3, p4], 0xff3333);
-            this.mobiTris.push(tri1);
-            this.mobiTris.push(tri2);
+        if (this.mobius) {
+            this.mobius.clear();
         }
         render();
     }
@@ -317,6 +316,12 @@ class ThreeJSViewer {
     addMobius(phi = 0) {
         this.mobius = new Mobius(phi)
         this.mobius.add(scene);
+        this.addHexagon();
+    }
+
+    addHexagon() {
+        this.hexagon = new Hexagon();
+        this.hexagon.add(scene);
     }
 
     run() {
@@ -336,6 +341,9 @@ class ThreeJSViewer {
         console.log("tick");
         if (this.mobius) {
             this.mobius.tick();
+        }
+        if (this.hexagon) {
+            this.hexagon.tick();
         }
         if (!this.running) {
             console.log("tick - not running");
@@ -445,7 +453,7 @@ function addTriangle(scene, pts, frontColor, backColor) {
     window.geometry = geometry;
     //geometry.computeFaceNormals();
     geometry.computeVertexNormals();
-     //geometry.faces[0].matererialIndex = 0;
+    //geometry.faces[0].matererialIndex = 0;
     //geometry.faces[1].matererialIndex = 1;
     const mat1 = new THREE.MeshBasicMaterial({
         color: frontColor,
