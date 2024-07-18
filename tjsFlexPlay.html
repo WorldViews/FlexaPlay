@@ -25,6 +25,25 @@
 
     <script type="module" src="js/ThreeJSViewer.js"></script>
     </script>
+    <style>
+        #gui {
+            position: absolute;
+            top: 250px;
+            zzleft: 2px
+        }
+
+        #logdiv {
+            display: none;
+            xdisplay: inline-block;
+            xborder-style: solid;
+            xborder-width: 2px;
+            xwidth: 100%;
+            height: 100px;
+            resize: vertical;
+            overflow: scroll;
+            xvertical-align: top;
+        }
+    </style>
 </head>
 
 <body>
@@ -32,6 +51,9 @@
         <h3>Flex Play Tool</h3>
         <div style="border-style: solid; border-width: 1; padding: 4px;">
             <button onclick="download()">Download</button>
+            &nbsp;
+            <select id="sheet">
+            </select>
             &nbsp;
             <select id="paperSize">
                 <option value="LETTER">Letter</option>
@@ -43,6 +65,8 @@
             &nbsp;
             <input type="checkbox" id="showLattice"> Lattice
             &nbsp;
+            <input type="checkbox" id="showLog"> Log
+            &nbsp;
             <input type="text" id="defstr" value="LRLR">
             &nbsp;
             <button id="runButton" onclick="startAnim()">Run</button>
@@ -51,16 +75,19 @@
             &nbsp;&nbsp;
             <span id="mouseInfo">mouse-info</span>
         </div>
-        <div id="viewWin">
+        <div id="logdiv">Log info:<br></div>
+        <div id="viewWin" style="width: 500px;">
             <div id="threeJSView">
                 <h3>3D View</h3>
-                <div id="container"></div>
-                <div id="info">
-                    <a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - SVGLoader
+                <div id="container">
                 </div>
             </div>
         </div>
     </div>
+    <div>
+        debug info region
+    </div>
+
     <script>
 
         function showMouseInfo(evt) {

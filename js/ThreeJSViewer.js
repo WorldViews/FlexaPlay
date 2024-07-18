@@ -43,6 +43,8 @@ class ThreeJSViewer {
         console.log("createGUI");
         if (gui) gui.destroy();
         gui = new GUI();
+        gui.domElement.id = 'gui';
+        //gui.domElement.id = 'container';   
         //let self = this;
         //let update = e => self.update(e);
         let update = this.update.bind(this);
@@ -79,15 +81,13 @@ class ThreeJSViewer {
 
     update() {
         console.log("ThreeJSViewer.update");
-        if (!this.mobius) {
-            console.log("no mobius");
-            return;
+        if (this.mobius) {
+            this.mobius.showDots = guiData.showDots;
+            this.mobius.showTris = guiData.showFaces;
+            this.mobius.ntwists = guiData.twists;
+            this.mobius.numSegs = guiData.numSegs;
+            this.mobius.phi = 8*guiData.phi;
         }
-        this.mobius.showDots = guiData.showDots;
-        this.mobius.showTris = guiData.showFaces;
-        this.mobius.ntwists = guiData.twists;
-        this.mobius.numSegs = guiData.numSegs;
-        this.mobius.phi = guiData.phi;
         if (this.hexagon) {
             this.hexagon.showDots = guiData.showDots;
             this.hexagon.showTris = guiData.showFaces;
@@ -135,7 +135,6 @@ class ThreeJSViewer {
         }
     }
 
-
     clear() {
         console.log("clear");
         if (this.mobius) {
@@ -148,7 +147,8 @@ class ThreeJSViewer {
     }
 
     addMobius(phi = 0) {
-        this.mobius = new TJS.Mobius(this, phi)
+        this.mobius = new TJS.Mobius(this, phi);
+        window.mobius = this.mobius;
         this.mobius.init(scene);
         this.addHexagon();
         render();
@@ -156,6 +156,7 @@ class ThreeJSViewer {
 
     addHexagon() {
         this.hexagon = new TJS.Hexagon(this);
+        window.hexagon = this.hexagon;
         this.hexagon.init(scene);
     }
 
@@ -226,37 +227,36 @@ class ThreeJSViewer {
         let indices = new Uint16Array([
             0, 1, 2, // first triangle
             2, 1, 0
-            //  2, 3, 0  // second triangle
         ]);
 
         // itemSize = 3 because there are 3 values (components) per vertex
         geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
         geometry.setIndex(new THREE.BufferAttribute(indices, 1));
         window.geometry = geometry;
-        //geometry.computeFaceNormals();
         geometry.computeVertexNormals();
-        //geometry.faces[0].matererialIndex = 0;
-        //geometry.faces[1].matererialIndex = 1;
-        //const mat1 = new THREE.MeshBasicMaterial({
         const mat1 = new THREE.MeshLambertMaterial({
             color: frontColor,
             //side: THREE.DoubleSide
         });
         mat1.emissive.setHex(frontColor);
         mat1.emissiveIntensity = 0.05;
-
-        //const mat2 = new THREE.MeshBasicMaterial({
-        //    color: backColor,
-        //    //side: THREE.DoubleSide
-        //});
-
         const mesh = new THREE.Mesh(geometry, mat1);
-        //const mymesh = new THREE.Mesh(geometry, [mat1, mat2]);
-        //console.log("mymesh", mymesh);
         scene.add(mesh);
         return mesh;
     }
 
+    addTriangles() {
+        console.log("addTriangles");
+        let h = 1;
+        let p1 = [0, 0, h];
+        let p2 = [10, 0, h];
+        let p3 = [0, 10, h];
+        this.addTriangle(scene, [p1, p2, p3], 0xff0000);
+        this.addTriangle(scene, [[20, 20, h], [30, 20, h], [20, 30, h]], 0x00ff00);
+        this.addTriangle(scene, [[50, 60], [50, 90], [70, 6]], 0x00ffff);
+        render();
+    }
+    
 }
 
 window.ThreeJSViewer = ThreeJSViewer;
@@ -331,17 +331,6 @@ function addLights(scene) {
 }
 
 
-function addTriangles() {
-    console.log("addTriangles");
-    let h = 1;
-    let p1 = [0, 0, h];
-    let p2 = [10, 0, h];
-    let p3 = [0, 10, h];
-    addTriangle(scene, [p1, p2, p3], 0xff0000);
-    addTriangle(scene, [[20, 20, h], [30, 20, h], [20, 30, h]], 0x00ff00);
-    addTriangle(scene, [[50, 60], [50, 90], [70, 6]], 0x00ffff);
-    render();
-}
 
 
 function onWindowResize() {
@@ -360,8 +349,6 @@ function render() {
 
 }
 
-//window.addDot = addDot;
-//window.addTriangle = addTriangle;
 
 export { ThreeJSViewer };
 

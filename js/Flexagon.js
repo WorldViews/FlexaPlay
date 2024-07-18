@@ -30,6 +30,8 @@ let side_length = 60;
 
 let x0 = 80;
 let y0 = 100;
+x0 = 260;
+y0 = 200;
 
 const E1 = [side_length, 0];
 const E2 = [side_length * Math.cos(A60), side_length * Math.sin(A60)];
@@ -153,6 +155,8 @@ function getTriangleStrip(nav = "RRRLR", ij0 = [0, 0]) {
     let h = 0;
     let x0 = 100;
     let y0 = 100;
+    x0 = 200;
+    y0 = 200;
     if (ij0) {
         let pt = app.getPointXY(ij0[0], ij0[1]);
         x0 = pt[0];
@@ -322,6 +326,18 @@ sheet.groups.push(getTriHexagonTemplate([0, 4]));
 
 let dotPoints = getPoints(30, 30, -10, -10);
 
+let SHEETS = {
+    'test1': "RRLRLRLR",
+    'test2': "RRLLRLRURLRRLR",
+    '3 trihexstrips': {
+        type: 'sheet',
+        groups: [
+            getTriHexagonTemplate(),
+            getTriHexagonTemplate([0, 2]),
+            getTriHexagonTemplate([0, 4])]
+    },
+}
+
 function drawTriGrid() {
     gridType = "TRIGRID";
     draw();
@@ -329,6 +345,19 @@ function drawTriGrid() {
 
 function drawHexGrid() {
     gridType = "HEXGRID";
+    draw();
+}
+
+function setSheet(sheetDef) {
+    console.log("setSheet", sheetDef);
+    if (typeof sheetDef == 'string') {
+        $("#defstr").val(sheetDef);
+        triangles = getTriangleStrip(sheetDef);
+        sheet.groups = [triangles];
+    }
+    else if (sheetDef.type == 'sheet') {
+        sheet = sheetDef;
+    }
     draw();
 }
 
@@ -357,6 +386,7 @@ function showFaceSelection(name) {
         str = `name: ${name} ${tri.label} ij: ${tri.ij} dz: ${tri.dz} dir: ${tri.dir}  \n`;
     }
     $("#faceInfo").text(str);
+    log(str);
 }
 
 function showMouseInfo(evt) {
@@ -364,6 +394,12 @@ function showMouseInfo(evt) {
         svgViewer.showMouseInfo(evt);
 }
 
+function log(str) {
+    console.log(str);
+    let logdiv = $("#logdiv");
+    logdiv.append(str + "<br>\n");
+    $("#logdiv").animate({ scrollTop: $(document).height() }, "slow");
+}
 
 function init() {
     console.log("Initializing...");
@@ -400,12 +436,36 @@ function jqinit() {
         draw();
     });
 
+    $("#showLog").change(function () {
+        let showLog = $(this).prop("checked");
+        console.log("showLog", showLog);
+        if (showLog)
+            $("#logdiv").show();
+        else
+            $("#logdiv").hide();
+    });
+
     $("#defstr").change(function () {
         let str = $(this).val();
         console.log("str", str);
         triangles = getTriangleStrip(str);
         sheet.groups = [triangles];
         draw();
+    });
+
+    // for each sheet in SHEETS, add an option to the select element
+    let sel = $("#sheet");
+    for (let key in SHEETS) {
+        let opt = $("<option>").attr("value", key).text(key);
+        sel.append(opt);
+    }
+    // when the select element changes, get the value and set the defstr value
+    // to the corresponding value in SHEETS
+    sel.change(function () {
+        let key = $(this).val();
+        let sheetDef = SHEETS[key];
+        console.log("sheetDef", sheetDef);
+        setSheet(sheetDef);
     });
 }
 
