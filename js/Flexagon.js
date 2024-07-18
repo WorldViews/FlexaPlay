@@ -59,7 +59,20 @@ class App {
         let D = E1[0] * E2[1] - E2[0] * E1[1];
         let i = (-E1[1] * y + E1[0] * y) / D;
         let j = (E2[1] * x - E2[0] * y) / D;
+        i = Math.round(i);
+        j = Math.round(j);
         return [i, j];
+    }
+
+    getTrianglesAt(i, j) {
+        let names = [];
+        for (let name in triMap) {
+            let tri = triMap[name];
+            if (tri.ij[0] == i && tri.ij[1] == j) {
+                names.push(name);
+            }
+        }
+        return names;
     }
 
 }
@@ -134,6 +147,17 @@ class Sheet {
 
 let triMap = {};
 
+function registerTriangles(sheet) {
+    triMap = {};
+    for (let group of sheet.groups) {
+        for (let tri of group.triangles) {
+            if (tri.name) {
+                triMap[tri.name] = tri;
+            }
+        }
+    }
+}
+
 function getTriangle(points, opts) {
     let tri = new Triangle(points, opts);
     if (opts.name) {
@@ -157,11 +181,9 @@ function getTriangleStrip(nav = "RRRLR", ij0 = [0, 0]) {
     let y0 = 100;
     x0 = 200;
     y0 = 200;
-    if (ij0) {
-        let pt = app.getPointXY(ij0[0], ij0[1]);
-        x0 = pt[0];
-        y0 = pt[1];
-    }
+    let pt = app.getPointXY(ij0[0], ij0[1]);
+    x0 = pt[0];
+    y0 = pt[1];
     let [i, j] = ij0;
     //let p0 = { x: x0, y: y0 };
     let x = x0;
@@ -214,6 +236,9 @@ function getTriangleStrip(nav = "RRRLR", ij0 = [0, 0]) {
             p0 = { x, y };
             tri.points = [getPt(p0, r, h1), getPt(p0, r, h2), getPt(p0, r, h3)];
             tri.dz = dz;
+            // not tested
+            let ij = app.getPointIJ(x, y);
+            tri.ij = ij;
             continue;
         }
         else {
@@ -327,9 +352,14 @@ sheet.groups.push(getTriHexagonTemplate([0, 4]));
 let dotPoints = getPoints(30, 30, -10, -10);
 
 let SHEETS = {
+    "starter": "S",
     'test1': "RRLRLRLR",
     'test2': "RRLLRLRURLRRLR",
-    '3 trihexstrips': {
+    'trihex strip': {
+        type: 'sheet',
+        groups: [getTriHexagonTemplate([-2, 0])]
+    },
+    '3 trihex strips': {
         type: 'sheet',
         groups: [
             getTriHexagonTemplate(),
@@ -358,6 +388,7 @@ function setSheet(sheetDef) {
     else if (sheetDef.type == 'sheet') {
         sheet = sheetDef;
     }
+    registerTriangles(sheet);
     draw();
 }
 

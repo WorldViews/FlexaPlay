@@ -45,7 +45,9 @@ class SVGViewer {
         i = Math.round(i);
         j = Math.round(j);
         let text = document.getElementById("mouseInfo");
-        text.textContent = x + "," + y + "   " + i + "," + j;
+        let tris = app.getTrianglesAt(i, j);
+        let trisStr = ""+tris;
+        text.textContent = x + "," + y + "   " + i + "," + j +"  " + trisStr;
     }
 
     clear() {
