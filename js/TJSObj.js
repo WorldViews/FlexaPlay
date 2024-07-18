@@ -7,6 +7,7 @@ import * as THREE from 'three';
 window.THREE = THREE;
 
 const A90 = Math.PI / 2;
+const A180 = Math.PI;
 
 class TJSObj {
 
@@ -39,6 +40,7 @@ function torus(u, v, r1 = 80, r2 = 20) {
     return [x, y, z];
 }
 
+
 class Hexagon extends TJSObj {
     constructor(viewer) {
         super(viewer);
@@ -67,7 +69,7 @@ class Hexagon extends TJSObj {
             this.scene.remove(dot);
         }
         this.dots = [];
-        //render();
+        this.tris = [];
     }
 
     add(scene) {
@@ -88,8 +90,6 @@ class Hexagon extends TJSObj {
                 let phi2 = phi/3;
                 rho = r * Math.cos(phi2);
                 h2 = r * Math.sin(phi2);
-                //rho = r;
-                //h2 = 0;
             }
             let a = i * Math.PI / 3;
             let x = rho * Math.cos(a);
@@ -98,9 +98,17 @@ class Hexagon extends TJSObj {
             this.points.push(pt);
         }
         if (this.showDots) {
-            for (let pt of this.points) {
-                let dot = this.viewer.addDot(scene, pt, 0xff0000);
-                this.dots.push(dot);
+            for (let i = 0; i < this.points.length; i++) {
+                let pt = this.points[i];
+                let dot = this.dots[i];
+                if (dot) {
+                    //console.log("adjust dot", i, pt);
+                    dot.position.set(pt[0], pt[1], pt[2]);
+                }
+                else {
+                    //console.log("create dot:", i, pt);
+                    this.dots[i] = this.viewer.addDot(scene, pt, 0xff0000);
+                }
             }
         }
         if (this.showTris) {
@@ -109,29 +117,52 @@ class Hexagon extends TJSObj {
                 let p1 = this.points[i + 1];
                 let p2 = this.points[(i + 1) % 6 + 1];
                 let c = i % 2 ? 0x00ff00 : 0xff0000;
-                console.log("p0:", p0, "p1:", p1, "p2:", p2, "c:", c);
-                let tri = this.viewer.addTriangle(scene, [p0, p1, p2], c);
-                this.tris.push(tri);
+                //console.log("p0:", p0, "p1:", p1, "p2:", p2, "c:", c);
+                let tri = this.tris[i];
+                if (tri) {
+                    //console.log("adjust tri", i, p0, p1, p2, c);
+                    //console.log("  geometry:", tri.geometry);
+                    const vertices = new Float32Array([
+                        p0[0], p0[1], p0[2], // v0
+                        p1[0], p1[1], p1[2], // v0
+                        p2[0], p2[1], p2[2], // v1
+                    ]);
+                    if (0) {
+                        console.log("p0:", p0[0], p0[1], p0[2]);
+                        console.log("p1:", p1[0], p1[1], p1[2]);
+                        console.log("p2:", p2[0], p2[1], p2[2]);
+                    }          
+                    // itemSize = 3 because there are 3 values (components) per vertex
+                    tri.geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+                    tri.geometry.verticesNeedUpdate = true;
+                }
+                else {
+                    //console.log("create tri:", i, p0, p1, p2, c);
+                    tri = this.viewer.addTriangle(scene, [p0, p1, p2], c);
+                    this.tris[i] = tri;
+                }
             }
         }
     }
 
     tick() {
         console.log("Hexagon.tick");
-        if (this.tris.length > 0 || this.dots.length > 0) {
-            this.clear();
-        }
         this.add(this.scene);
     }
 }
 
-
+//
+// this class is a mobius strip of triangles
+// it is intended to have an animation showing
+// the twists moving along the strip.
 class Mobius extends TJSObj {
 
     constructor(viewer, phi) {
         super(viewer);
         this.phi = 0;
+        this.speed = 3;
         this.numSegs = 90;
+        this.prevNumSegs = null;
         this.ntwists = 1;
         this.tris = [];
         this.dots = [];
@@ -158,7 +189,7 @@ class Mobius extends TJSObj {
         this.rpts2 = [];
         let rpts1 = this.rpts1;
         let rpts2 = this.rpts2;
-        console.log("****************** ntwists:", ntwists);
+        console.log("***** ntwists:", ntwists);
 
         //console.log("rpts1", rpts1);
         let phi = this.phi;
@@ -170,6 +201,7 @@ class Mobius extends TJSObj {
             rpts1.push(torus(u1, v1, r1, r2));
             let t2 = (i + 1) / n;
             let u2 = 2 * Math.PI * t2;
+            //let v2 = v1 + A90;
             let v2 = v1 + A90;
             rpts2.push(torus(u2, v2, r1, r2));
         }
@@ -180,17 +212,41 @@ class Mobius extends TJSObj {
             let p2 = rpts2[i];
             let p3 = rpts1[i + 1];
             let p4 = rpts2[i + 1];
+            let i1 = 2*i;
+            let i2 = 2*i + 1;
             if (this.showDots) {
-                let dot1 = v.addDot(scene, p1, 0xff0000);
-                let dot2 = v.addDot(scene, p2, 0x00ff00);
-                this.dots.push(dot1);
-                this.dots.push(dot2);
+                if (! this.dots[i1]) {
+                    console.log("mobius create dot:", i1, p1, p2);
+                    this.dots[i1] = v.addDot(scene, p1, 0xff0000);
+                    this.dots[i2] = v.addDot(scene, p2, 0x00ff00);
+                }
+                else {
+                    //console.log("mobius adjust dot:", i1, p1, p2);
+                    this.dots[i1].position.set(p1[0], p1[1], p1[2]);
+                    this.dots[i2].position.set(p2[0], p2[1], p2[2]);
+                }
             }
             if (this.showTris) {
-                let tri1 = v.addTriangle(scene, [p1, p2, p3], 0x0000ff);
-                let tri2 = v.addTriangle(scene, [p2, p3, p4], 0xff3333);
-                this.tris.push(tri1);
-                this.tris.push(tri2);
+                if (! this.tris[i1]) {
+                    //console.log("mobius create tri:", i1, p1, p2, p3);
+                    this.tris[i1] = v.addTriangle(scene, [p1, p2, p3], 0x0000ff);
+                    this.tris[i2] = v.addTriangle(scene, [p2, p3, p4], 0xff3333);
+                }
+                else {
+                    //console.log("mobius adjust tri:", i1, p1, p2, p3);
+                    const vertices_i1 = new Float32Array([
+                        p1[0], p1[1], p1[2], // v0
+                        p2[0], p2[1], p2[2], // v1
+                        p3[0], p3[1], p3[2], // v2
+                    ]);
+                    this.tris[i1].geometry.setAttribute('position', new THREE.BufferAttribute(vertices_i1, 3));
+                    const vertices_i2 = new Float32Array([
+                        p2[0], p2[1], p2[2], // v0
+                        p3[0], p3[1], p3[2], // v1
+                        p4[0], p4[1], p4[2], // v2
+                    ]);
+                    this.tris[i2].geometry.setAttribute('position', new THREE.BufferAttribute(vertices_i2, 3));
+                }
             }
         }
     }
@@ -205,20 +261,22 @@ class Mobius extends TJSObj {
             this.scene.remove(dot);
         }
         this.dots = [];
+        this.tris = [];
     }
 
     tick() {
         console.log("Mobius.tick");
-        if (this.tris.length > 0 || this.dots.length > 0) {
+        //if (this.tris.length > 0 || this.dots.length > 0) {
+        //    this.clear();
+        //}
+        if (this.numSegs != this.prevNumSegs) {
             this.clear();
+            this.prevNumSegs = this.numSegs;
         }
-        this.phi += 0.01;
+        this.phi += 0.01*this.speed;
         this.add(this.scene);
     }
 }
-
-//window.Mobius = Mobius;
-//window.Hexagon = Hexagon;
 
 export { TJSObj, Mobius, Hexagon };
 
