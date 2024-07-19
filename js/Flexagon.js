@@ -355,6 +355,7 @@ let SHEETS = {
     "starter": "S",
     'test1': "RRLRLRLR",
     'test2': "RRLLRLRURLRRLR",
+    'trihexaflexagon': "SLRURLRURLRU",
     'trihex strip': {
         type: 'sheet',
         groups: [getTriHexagonTemplate([-2, 0])]
